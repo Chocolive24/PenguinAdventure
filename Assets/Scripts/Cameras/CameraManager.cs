@@ -19,6 +19,7 @@ public class CameraManager : MonoBehaviour
         BattleManager.OnBattleStart += ChangeCamera;
         BattleManager.OnBattleEnd += ChangeCamera;
         DoorTileCell.OnDoorTileEnter += MoveCamera;
+        ShopManager.OnShopExit += ExitShop;
     }
 
     private void SetCamerasSpawnPoint(GridManager arg1, RoomData startRoom)
@@ -46,6 +47,11 @@ public class CameraManager : MonoBehaviour
         
         _exploringCam.transform.position = spawnPos;
         _battleCam.transform.position = new Vector3(spawnPos.x, spawnPos.y - _battleCamYoffset, spawnPos.z);
+    }
+    
+    private void ExitShop(ShopManager shop)
+    {
+        MoveCamera(shop.Door);
     }
     
     // Start is called before the first frame update

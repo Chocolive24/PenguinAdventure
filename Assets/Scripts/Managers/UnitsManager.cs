@@ -64,6 +64,7 @@ public class UnitsManager : MonoBehaviour
 
         DoorTileCell.OnDoorTileEnter += SpawnHeroes;
         DoorTileCell.OnDoorTileEnter += SpawnRoomEnemies;
+        ShopManager.OnShopExit += SpawnHeroOutsideShop;
 
         //Room.OnRoomEnter += SpawnEntities;
     }
@@ -83,32 +84,37 @@ public class UnitsManager : MonoBehaviour
         
             while (remainginWeight > 0)
             {
-                BaseEnemy enemy = GetAnEnemyByType(EnemyType.SPAWNER);
+                BaseEnemy enemy = GetAnEnemyByType(EnemyType.TANK);
                 //BaseEnemy enemy = GetRandomEnemyUnderWeight(remainginWeight);
 
                 bool isPosValid = false;
                 
                 //Vector3Int randomSpawnPos = new Vector3Int();
                 
-                var randomSpawnPos = _currentRoom.GetARandomTilePosition();
+                Vector3Int randomSpawnPos = new Vector3Int();
                 
-                // do
-                // {
-                //     randomSpawnPos = _currentRoom.GetARandomTilePosition();
-                //
-                //     enemy.transform.position = randomSpawnPos;
-                //     
-                //     foreach (var tile in enemy.GetOccupiedTiles())
-                //     {
-                //         if (!tile.Walkable)
-                //         {
-                //             continue;
-                //         }
-                //
-                //         isPosValid = true;
-                //     }
-                //     
-                // } while (!isPosValid);
+                do
+                {
+                    randomSpawnPos = _currentRoom.GetARandomTilePosition();
+                
+                    enemy.transform.position = _gridManager.WorldToCellCenter(randomSpawnPos);
+                    
+                    foreach (var tile in enemy.GetOccupiedTiles())
+                    {
+                        if (!_gridManager.GetTileAtPosition(_gridManager.WorldToCellCenter(tile.transform.position)))
+                        {
+                            continue;
+                        }
+
+                        if (!tile.Walkable)
+                        {
+                            continue;
+                        }
+                        
+                        isPosValid = true;
+                    }
+                    
+                } while (!isPosValid);
                 
                 var spawnedEnemy = Instantiate(enemy);
                 
@@ -177,6 +183,11 @@ public class UnitsManager : MonoBehaviour
         
     }
 
+    private void SpawnHeroOutsideShop(ShopManager shop)
+    {
+        SpawnHeroes(shop.Door);
+    }
+    
     public void SpawnHeroes(DoorTileCell doorTile)
     {
         _heroSpawnPos = doorTile.GetNextRoomSpawnPos();

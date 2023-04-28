@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +14,12 @@ public class ShopManager : MonoBehaviour
     
     // References ------------------------------------------------------------------------------------------------------
     [SerializeField] private GameObject _shopPanel;
+    [SerializeField] private GameObject _exploringPanel;
+
+    private RoomData _room;
+    private DoorTileCell _door;
+
+    private bool _hasCreateObjects = false;
     
     [Header("Cards Rect Transform")]
     [SerializeField] private RectTransform _rareCard1RectTrans;
@@ -40,6 +48,15 @@ public class ShopManager : MonoBehaviour
     
     private CardsManager _cardsManager;
     private GridManager _gridManager;
+    private UnitsManager _unitsManager;
+
+    // Events ----------------------------------------------------------------------------------------------------------
+    public static event Action<ShopManager> OnShopExit; 
+
+    // Getters ans Setters ---------------------------------------------------------------------------------------------
+    public RoomData Room => _room;
+
+    public DoorTileCell Door => _door;
 
     // Methods ---------------------------------------------------------------------------------------------------------
     // Start is called before the first frame update
@@ -52,17 +69,33 @@ public class ShopManager : MonoBehaviour
     {
         _cardsManager = CardsManager.Instance;
         _gridManager = GridManager.Instance;
+        _unitsManager = UnitsManager.Instance;
     }
 
     private void ActivateShop(DoorTileCell doorTile)
     {
         if (doorTile.GetRoomNeighbour().Type == RoomData.RoomType.SHOP)
         {
+            _room = doorTile.GetRoomNeighbour();
+            Vector3 pos = Neighbourhood.CardinalNeighbours[doorTile.Direction];
+            var tile = _gridManager.GetTileAtPosition(doorTile.transform.position + pos);
+
+            if ((DoorTileCell)(tile))
+            {
+                _door = (DoorTileCell)tile;
+            }
+            
             _shopPanel.SetActive(true);
+            _exploringPanel.SetActive(false);
 
             DesactivateTiles(doorTile.GetRoomNeighbour());
 
-            CreateObjects();
+            if (!_hasCreateObjects)
+            {
+                _hasCreateObjects = true;
+                CreateObjects();
+            }
+            
         }
     }
 
@@ -72,7 +105,8 @@ public class ShopManager : MonoBehaviour
         {
             for (int y = room.Bounds.yMin; y < room.Bounds.yMax; y++)
             {
-                TileCell tile = _gridManager.GetTileAtPosition(new Vector3(x, y, 0));
+                TileCell tile = _gridManager.GetTileAtPosition(
+                    _gridManager.WorldToCellCenter(new Vector3(x, y, 0)));
                 tile.BoxCollider2D.enabled = false;
             }
         }
@@ -80,11 +114,41 @@ public class ShopManager : MonoBehaviour
 
     private void CreateObjects()
     {
-        // TODO mettre dans une méthode.
-        BaseCard cardRare1 = _cardsManager.InstantiateCard(_cardsManager.ScrBasicMoveCards, Rarety.Rare);
-        cardRare1.transform.position = _rareCard1RectTrans.position;
-        cardRare1.transform.parent = _rareCard1RectTrans.transform.parent;
-        _rareCard1Cost.text = cardRare1.GetCost(50, 75).ToString();
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Rare, _rareCard1RectTrans, 
+            _rareCard1Cost,50, 75);
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Rare, _rareCard2RectTrans, 
+            _rareCard2Cost,50, 75);
+        
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Epic, _epicCard1RectTrans,
+            _epicCard1Cost, 120, 160);
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Epic, _epicCard2RectTrans, 
+            _epicCard2Cost,100, 130);
+        
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Legendary, _legCard1RectTrans, 
+            _legCard1Cost, 200, 250);
+        CreateACard(_cardsManager.ScrBasicMoveCards, Rarety.Legendary, _legCard2RectTrans, 
+            _legCard2Cost, 200, 250);
+    }
+
+    private void CreateACard(List<ScriptableCard> scrCards, Rarety rarety, RectTransform rect, TextMeshProUGUI costText,
+        int minCost, int maxCost)
+    {
+        BaseCard cardRare1 = _cardsManager.InstantiateCard(scrCards, rarety);
+        cardRare1.transform.position = rect.position;
+        cardRare1.transform.parent = rect.transform.parent;
+        costText.text = cardRare1.GetCost(minCost, maxCost).ToString();
         cardRare1.OnCollected += _cardsManager.AddCollectedCardToDeck;
+    }
+
+    public void OnExit()
+    {
+        _shopPanel.SetActive(false);
+        _exploringPanel.SetActive(true);
+
+        OnShopExit?.Invoke(this);
+        
+        // Vector3 position = Neighbourhood.CardinalNeighbours[_room.DoorsData.First().Value];
+        //
+        // _unitsManager.HeroPlayer.transform.position = _room.DoorsData.First().Key + 2 * position;
     }
 }

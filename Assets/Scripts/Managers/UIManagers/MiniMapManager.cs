@@ -25,8 +25,9 @@ public class MiniMapManager : MonoBehaviour
         _roomsUI = new Dictionary<Vector3, Image>();
         
         DoorTileCell.OnDoorTileEnter += UpdateMiniMap;
+        ShopManager.OnShopExit += ExitShopUpdate;
     }
-    
+
     // Start is called before the first frame update
     void Start()
     {
@@ -146,5 +147,10 @@ public class MiniMapManager : MonoBehaviour
             default:
                 return Vector3.zero;
         }
+    }
+    
+    private void ExitShopUpdate(ShopManager shop)
+    {
+        UpdateMiniMap(shop.Door);
     }
 }

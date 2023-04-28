@@ -88,7 +88,7 @@ public class TileCell : MonoBehaviour
         set => _previousTilePos = value;
     }
 
-    public BoxCollider2D BoxCollider2D => _boxCollider2D;
+    public BoxCollider2D BoxCollider2D => GetComponent<BoxCollider2D>();
 
     #endregion
     
@@ -98,8 +98,7 @@ public class TileCell : MonoBehaviour
     private void Start()
     {
         _arrowTranslator = new ArrowTranslator();
-        _boxCollider2D = GetComponent<BoxCollider2D>();
-        
+
         ReferenceManagers();
         _position = _gridManager.WorldToCellCenter(transform.position);
     }
