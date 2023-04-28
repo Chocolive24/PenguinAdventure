@@ -88,7 +88,7 @@ public abstract class DeckController : MonoBehaviour
 
         _deck.Add(card);
 
-        _size = _deck.Count;
+        _size++;
         
         UpdateCardTxtNbr();
 

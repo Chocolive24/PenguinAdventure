@@ -84,8 +84,8 @@ public class UnitsManager : MonoBehaviour
         
             while (remainginWeight > 0)
             {
-                BaseEnemy enemy = GetAnEnemyByType(EnemyType.TANK);
-                //BaseEnemy enemy = GetRandomEnemyUnderWeight(remainginWeight);
+                //BaseEnemy enemy = GetAnEnemyByType(EnemyType.GOBLIN);
+                BaseEnemy enemy = GetRandomEnemyUnderWeight(remainginWeight);
 
                 bool isPosValid = false;
                 
